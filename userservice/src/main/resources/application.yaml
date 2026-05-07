@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: user-identity-service
+
+  # Spring Session using Redisson
+  # Note: To use Redisson for sessions, ensure you have 'redisson-spring-session-starter'
+  session:
+    store-type: redis
+    redis:
+      flush-mode: on_save
+      namespace: splitwise:session
+
+  # Redisson Configuration (Replaces standard spring.data.redis)
+  # This matches the high-scale requirements in your resume
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # If using Firebase, the issuer is https://securetoken.google.com/<YOUR_PROJECT_ID>
+          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID}
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+
+# SpringDoc / OpenAPI Configuration
+# This points the library to where your documentation logic is
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  show-actuator: true
+
+# Server Port configuration for the User Service
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Custom logging to match your Datadog monitoring experience
+logging:
+  level:
+    root: INFO
+    com.splitwise.user: DEBUG
+    org.redisson: INFO

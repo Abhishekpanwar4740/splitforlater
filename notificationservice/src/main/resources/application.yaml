@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: notification-service
+  rabbitmq:
+    listener:
+      simple:
+        concurrency: 10 # High concurrency for alerts
+        max-concurrency: 20
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+  # Redisson specific settings (optional)
+  redisson:
+    config: |
+      singleServerConfig:
+        address: "redis://${spring.data.redis.host}:${spring.data.redis.port}"
+        password: "${spring.data.redis.password}"
+        connectionPoolSize: 64
+        connectionMinimumIdleSize: 24
+io:
+  awspring:
+    cloud:
+      region:
+        static: us-east-1
+      credentials:
+        instance-profile: true # Uses IAM Role on EC2/EKS
+      ses:
+        source: no-reply@splitwise-clone.com # Verified SES Email
+
+notification:
+  sns:
+    topic-arn: arn:aws:sns:us-east-1:123456789:ExpenseAlerts

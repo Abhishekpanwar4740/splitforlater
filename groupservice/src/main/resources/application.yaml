@@ -1,0 +1,54 @@
+server:
+  port: 8082
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: group-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/splitwise_groups
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# Redisson Configuration for Distributed Locking
+redisson:
+  address: "redis://${REDIS_HOST:localhost}:6379"
+
+# SpringDoc OpenAPI 3.0 Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # Groups APIs logically in the UI
+    tags-sorter: alpha
+    operations-sorter: alpha
+  # Customizing the OpenAPI info via YAML (can also be done in a @Configuration class)
+  openapi:
+    info:
+      title: Group & Member Service API
+      version: 1.0.0
+      description: API for managing Splitwise groups and memberships with Redisson-backed locking.
+    components:
+      securitySchemes:
+        UserIdHeader:
+          type: apiKey
+          in: header
+          name: X-User-Id
+    security:
+      - UserIdHeader: []
+
+# Logging for Datadog-style observability
+logging:
+  level:
+    root: INFO
+    com.splitwise.groups: DEBUG
+    org.redisson: WARN
