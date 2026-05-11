@@ -11,7 +11,6 @@ public class UserMapper {
                 .name(user.getName())
                 .email(user.getEmail())
                 .imgUrl(user.getImgUrl())
-                .defaultCurrency(user.getDefaultCurrency())
                 .build();
     }
 }

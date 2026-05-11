@@ -13,12 +13,10 @@ public class GroupMember {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
+    @Column(name="group_id")
     private UUID groupId;
     private UUID userId;
-
-    // Stored in minor units (cents) to avoid floating point errors
     private Long pendingBalance;
-
-    private LocalDateTime joinedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

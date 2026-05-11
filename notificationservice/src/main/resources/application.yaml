@@ -1,34 +1,92 @@
+server:
+  port: 8086
+  error:
+    include-message: always
+    include-binding-errors: always
+
 spring:
   application:
     name: notification-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:splitforlater}
+    username: ${DB_USER:splituser}
+    password: ${DB_PASS:splitpass}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   rabbitmq:
+    addresses: amqp://${RABBITMQ_USER:guest}:${RABBITMQ_PASS:guest}@${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}
     listener:
       simple:
-        concurrency: 10 # High concurrency for alerts
-        max-concurrency: 20
+        concurrency: 5 # Process 5 messages in parallel
+        max-concurrency: 10
+        acknowledge-mode: auto
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: 6379
-      password: ${REDIS_PASSWORD:}
-  # Redisson specific settings (optional)
-  redisson:
-    config: |
-      singleServerConfig:
-        address: "redis://${spring.data.redis.host}:${spring.data.redis.port}"
-        password: "${spring.data.redis.password}"
-        connectionPoolSize: 64
-        connectionMinimumIdleSize: 24
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis_pass}
+
+    # 2. Redisson-specific overrides
+    # The starter 4.x looks for this prefix to configure the RedissonClient
+  redis:
+    redisson:
+      config:
+        singleServerConfig:
+          address: "redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}"
+          password: "${REDIS_PASSWORD:redis_pass}"
+          connectionPoolSize: 64
+          connectionMinimumIdleSize: 24
+      
+
+# SpringDoc OpenAPI 3.0 Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # Groups APIs logically in the UI
+    tags-sorter: alpha
+    operations-sorter: alpha
+  # Customizing the OpenAPI info via YAML (can also be done in a @Configuration class)
+  openapi:
+    info:
+      title: Notification Service API
+      version: 1.0.0
+      description: API for managing Splitwise notifications
+    components:
+      securitySchemes:
+        UserIdHeader:
+          type: apiKey
+          in: header
+          name: X-User-Id
+    security:
+      - UserIdHeader: []
+
+logging:
+  level:
+    root: INFO
+    com.splitwise.user: DEBUG
+    org.redisson: INFO
+
 io:
   awspring:
     cloud:
       region:
         static: us-east-1
       credentials:
-        instance-profile: true # Uses IAM Role on EC2/EKS
+        # Replace instance-profile with these two fields:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       ses:
-        source: no-reply@splitwise-clone.com # Verified SES Email
+        source: abhishek_p@ee.iitr.ac.in # Verified SES Email
 
 notification:
   sns:
-    topic-arn: arn:aws:sns:us-east-1:123456789:ExpenseAlerts
+    topic-arn: ${TOPIC_ARN}

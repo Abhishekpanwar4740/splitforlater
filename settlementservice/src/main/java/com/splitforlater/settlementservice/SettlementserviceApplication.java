@@ -2,7 +2,9 @@ package com.splitforlater.settlementservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
+@EnableFeignClients
 @SpringBootApplication(scanBasePackages = {
 		"com.splitforlater.settlementservice",
 		"com.splitforlater.common"

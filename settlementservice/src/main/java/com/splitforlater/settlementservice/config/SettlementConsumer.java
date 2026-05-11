@@ -1,5 +1,8 @@
 package com.splitforlater.settlementservice.config;
 
+import com.splitforlater.common.config.RabbitMQConfig;
+import com.splitforlater.common.dto.ExpenseEvent;
+import com.splitforlater.common.dto.SplitDto;
 import com.splitforlater.settlementservice.client.ExpenseClient;
 import com.splitforlater.settlementservice.dto.ExpenseResponseDto;
 import com.splitforlater.settlementservice.service.SettlementService;
@@ -21,19 +24,21 @@ public class SettlementConsumer {
     private final SettlementService settlementService;
     private final ExpenseClient expenseClient;
 
-    @RabbitListener(queues = "settlement.queue")
-    public void onExpenseCreated(ExpenseRequestDto dto) {
-        log.info("Received expense event for group: {}", dto.getGroupId());
+    @RabbitListener(queues = RabbitMQConfig.EXPENSE_QUEUE_NAME)
+    public void onExpenseEvent(ExpenseEvent event) {
+        log.info("Received {} event for group: {}", event.getAction(), event.getGroupId());
 
-        // 1. Fetch full history from Expense Service via Feign
-        List<ExpenseResponseDto> history = expenseClient.getExpensesByGroup(dto.getGroupId());
+        // 1. Fetch full ACTIVE history from Expense Service via Feign
+        // If an expense was deleted, the Expense Service will NOT return it in this list.
+        List<ExpenseResponseDto> history = expenseClient.getExpensesByGroup(event.getGroupId());
 
-        // 2. USE THE METHOD HERE: Aggregate all expenses into a single Net Balance map
-        // We pass the entire history to our calculation engine
+        // 2. Aggregate all expenses into a single Net Balance map
+        // The math naturally reflects the deletion because the deleted item is gone from the history.
         Map<UUID, Long> aggregateBalances = calculateNetBalances(history);
 
-        // 3. Run the "Simplify Debt" Algorithm with the calculated balances
-        settlementService.simplifyDebts(dto.getGroupId(), aggregateBalances);
+        // 3. Run the "Simplify Debt" Algorithm
+        // This will wipe the old simplified debts and write the new correct ones.
+        settlementService.simplifyDebts(event.getGroupId(), aggregateBalances);
     }
 
     /**
@@ -51,7 +56,7 @@ public class SettlementConsumer {
 
             // Debit the Participants (They get (-) their specific share)
             for (SplitDto split : expense.getSplits()) {
-                UUID userId = split.getUserId();
+                UUID userId = split.getUser().getUserId();
                 netBalances.put(userId, netBalances.getOrDefault(userId, 0L) - split.getAmount());
             }
         }

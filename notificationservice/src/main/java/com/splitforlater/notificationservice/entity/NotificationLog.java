@@ -16,7 +16,7 @@ public class NotificationLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private UUID userId;
+    private UUID groupId;
     private String type; // SMS, EMAIL, PUSH
     private String recipient;
     private String status; // SENT, FAILED

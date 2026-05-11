@@ -10,6 +10,6 @@ import java.util.UUID;
 @Data
 public class SplitDto implements Serializable {
     @NotNull
-    private UUID userId;
+    private UserDto user;
     @Min(1) private Long amount;
 }

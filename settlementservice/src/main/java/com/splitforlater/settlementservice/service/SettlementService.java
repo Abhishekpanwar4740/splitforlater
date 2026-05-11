@@ -2,6 +2,7 @@ package com.splitforlater.settlementservice.service;
 
 import com.splitforlater.settlementservice.dto.UserBalance;
 import com.splitforlater.settlementservice.entity.SimplifiedDebt;
+import com.splitforlater.settlementservice.repository.GroupRepository;
 import com.splitforlater.settlementservice.repository.SimplifiedDebtRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ import java.util.*;
 public class SettlementService {
 
     private final SimplifiedDebtRepository debtRepo;
-
+    private final GroupRepository groupRepository;
     @Transactional
     public void simplifyDebts(UUID groupId, Map<UUID, Long> netBalances) {
         // 1. Clear old simplified debts for this group
@@ -57,4 +58,15 @@ public class SettlementService {
         debtRepo.saveAll(newDebts);
         log.info("Simplified {} debts for group {}", newDebts.size(), groupId);
     }
+    @Transactional
+    public List<SimplifiedDebt> getSimplifiedDebts(UUID groupId, UUID requesterId) {
+        boolean isMember = groupRepository.existsByIdAndMembers_Id(groupId, requesterId);
+        if (!isMember) {
+            throw new SecurityException("You are not authorized to view expenses in this group.");
+        }
+        return debtRepo.findByGroupId(groupId);
+    }
+
+
+
 }

@@ -1,6 +1,19 @@
 spring:
   application:
     name: user-identity-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:splitforlater}
+    username: ${DB_USER:splituser}
+    password: ${DB_PASS:splitpass}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
   # Spring Session using Redisson
   # Note: To use Redisson for sessions, ensure you have 'redisson-spring-session-starter'
@@ -16,33 +29,32 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:redis_pass}
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          # If using Firebase, the issuer is https://securetoken.google.com/<YOUR_PROJECT_ID>
-          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID}
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope:
-              - email
-              - profile
 
-# SpringDoc / OpenAPI Configuration
-# This points the library to where your documentation logic is
+# SpringDoc OpenAPI 3.0 Configuration
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    operations-sorter: alpha
+    # Groups APIs logically in the UI
     tags-sorter: alpha
-  show-actuator: true
+    operations-sorter: alpha
+  # Customizing the OpenAPI info via YAML (can also be done in a @Configuration class)
+  openapi:
+    info:
+      title: User Service API
+      version: 1.0.0
+      description: API for managing Splitwise users.
+    components:
+      securitySchemes:
+        UserIdHeader:
+          type: apiKey
+          in: header
+          name: X-User-Id
+    security:
+      - UserIdHeader: []
 
 # Server Port configuration for the User Service
 server:

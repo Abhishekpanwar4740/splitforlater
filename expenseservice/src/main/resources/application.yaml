@@ -1,27 +1,76 @@
 server:
   port: 8083
+  error:
+    include-message: always
+    include-binding-errors: always
 
 spring:
   application:
     name: expense-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/splitwise_expenses
-    username: ${DB_USER:postgres}
-    password: ${DB_PASS:password}
-  rabbitmq:
-    addresses: ${AWS_RABBITMQ_ENDPOINT}
-    username: ${AWS_RABBITMQ_USER}
-    password: ${AWS_RABBITMQ_PASSWORD}
-    ssl:
-      enabled: true
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:splitforlater}
+    username: ${DB_USER:splituser}
+    password: ${DB_PASS:splitpass}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis_pass}
 
-# Redisson for Distributed Locking on Group ID
-redisson:
-  address: "redis://${REDIS_HOST:localhost}:6379"
+    # 2. Redisson-specific overrides
+    # The starter 4.x looks for this prefix to configure the RedissonClient
+  redis:
+    redisson:
+      config:
+        singleServerConfig:
+          address: "redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}"
+          password: "${REDIS_PASSWORD:redis_pass}"
+          connectionPoolSize: 64
+          connectionMinimumIdleSize: 24
+  rabbitmq:
+    addresses: amqp://${RABBITMQ_USER:guest}:${RABBITMQ_PASS:guest}@${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}
+    listener:
+      simple:
+        concurrency: 5 # Process 5 messages in parallel
+        max-concurrency: 10
+        acknowledge-mode: auto
 
+
+# SpringDoc OpenAPI 3.0 Configuration
 springdoc:
+  api-docs:
+    path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+    # Groups APIs logically in the UI
+    tags-sorter: alpha
+    operations-sorter: alpha
+  # Customizing the OpenAPI info via YAML (can also be done in a @Configuration class)
+  openapi:
+    info:
+      title: Expense Service API
+      version: 1.0.0
+      description: API for managing Splitwise groups expenses with Redisson-backed locking.
+    components:
+      securitySchemes:
+        UserIdHeader:
+          type: apiKey
+          in: header
+          name: X-User-Id
+    security:
+      - UserIdHeader: []
+
+logging:
+  level:
+    root: INFO
+    com.splitwise.user: DEBUG
+    org.redisson: INFO

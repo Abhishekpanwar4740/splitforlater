@@ -3,6 +3,7 @@ package com.splitforlater.user.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -16,16 +17,12 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-
     @Column(nullable = false)
     private String name;
-
     @Column(unique = true, nullable = false)
     private String email;
-
     private String imgUrl;
-
-    @Builder.Default
-    @Column(name = "default_currency")
-    private String defaultCurrency = "USD";
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private List<Group> groups;
 }

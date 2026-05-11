@@ -24,7 +24,5 @@ public class ExpenseResponseDto implements Serializable {
     private UUID groupId;
     private UUID payerId;
     private LocalDateTime createdAt;
-
-    // The list of all users involved and their specific shares
     private List<SplitDto> splits;
 }
